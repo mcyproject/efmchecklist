@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EFM Checklist (Final)</title>
+  <style>
+    /* --- FINAL MINIMALIST UI / IOS STYLE --- */
+    :root {
+      --primary-color: #007aff;
+      --secondary-color: #8e8e93;
+      --background-color: #f2f2f7;
+      --surface-color: #ffffff;
+      --text-color: #1c1c1e;
+      --text-secondary-color: #6d6d72;
+      --success-color: #34c759;
+      --warning-color: #ff9500;
+      --danger-color: #ff3b30;
+      --separator-color: #e5e5ea;
+      --soft-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 15px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    h1, h2, h3 {
+      color: var(--text-color);
+      text-align: center;
+      font-weight: 600;
+    }
+    button, .button-link {
+      background-color: var(--primary-color);
+      color: white !important;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 999px; /* Pill shape */
+      font-size: 1.0em;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+    button:hover, button:focus, .button-link:hover, .button-link:focus {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    button:active, .button-link:active {
+      transform: translateY(0) scale(0.97);
+      box-shadow: none;
+    }
+    button:disabled {
+      background-color: #c7c7cc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .btn-secondary { background-color: var(--secondary-color); }
+    .btn-danger { background-color: var(--danger-color); padding: 6px 16px; font-size: 0.9em; }
+    .page { display: none; padding-bottom: 50px; }
+    .page.active { display: block; }
+    .container {
+      max-width: 700px;
+      margin: 20px auto;
+      background: var(--surface-color);
+      padding: 25px;
+      border-radius: 22px;
+      box-shadow: var(--soft-shadow);
+    }
+    .header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .save-action { text-align: center; margin-top: 20px; }
+
+    /* --- Home Page --- */
+    #home-page h1 { font-size: 1.8em; margin-bottom: 20px;}
+    .machine-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        padding: 20px 10px;
+        max-width: 450px;
+        margin: 0 auto;
+    }
+    .machine-icon {
+      background-color: var(--surface-color);
+      border: 5px solid var(--separator-color);
+      border-radius: 50%;
+      aspect-ratio: 1 / 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.25s ease; position: relative;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+    .machine-icon:hover { transform: scale(1.05); box-shadow: var(--soft-shadow); }
+    .machine-icon.status-ready { border-color: var(--success-color); }
+    .machine-icon.status-cleaning { border-color: var(--warning-color); }
+    .machine-icon.status-not_ready { border-color: var(--danger-color); }
+    .machine-icon svg { width: 35%; height: 35%; color: var(--text-color); }
+    .machine-icon span { font-weight: 600; font-size: 1.2em; color: var(--text-secondary-color); margin-top: 5px; }
+    .checked-today-indicator {
+      position: absolute; top: 8%; right: 8%; width: 26px; height: 26px;
+      background-color: var(--success-color); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white; border: 2px solid white;
+    }
+    .checked-today-indicator svg { width: 16px; height: 16px; margin: 0; }
+    .home-actions { display: flex; justify-content: center; gap: 15px; margin-top: 30px; flex-wrap: wrap; }
+
+    /* --- Checklist Page --- */
+    #checklist-page .checklist-item {
+      display: flex; align-items: center;
+      margin: 12px 0; font-size: 1.1em; padding: 16px;
+      background-color: #fff; border: 1px solid var(--separator-color);
+      border-radius: 14px; transition: all 0.2s ease;
+    }
+    #checklist-page input[type="checkbox"] { transform: scale(1.2); margin-right: 15px; flex-shrink: 0; }
+    .status-selector { margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--separator-color); }
+    .status-selector h3, .signature-section h2 { color: var(--text-secondary-color); font-weight: 500; font-size: 1em; text-align: left; margin-bottom: 15px; }
+    .status-buttons { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+    .status-btn { background-color: var(--separator-color); color: var(--text-color); }
+    .status-btn.ready.active { background-color: var(--success-color); color: white; }
+    .status-btn.cleaning.active { background-color: var(--warning-color); color: white; }
+    .status-btn.not_ready.active { background-color: var(--danger-color); color: white; }
+
+    /* --- Summary Page --- */
+    .summary-item {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 1.1em; padding: 18px;
+      background-color: var(--background-color); border-radius: 14px;
+      margin-bottom: 10px;
+    }
+    .summary-item .count { font-weight: 700; font-size: 1.2em; }
+    .summary-item .ready { color: var(--success-color); }
+    .summary-item .cleaning { color: var(--warning-color); }
+    .summary-item .not_ready { color: var(--danger-color); }
+    .signature-section { text-align: left; }
+    .signature-section label { display: block; margin-bottom: 5px; color: var(--text-secondary-color); font-weight: 500; }
+    .signature-section input {
+      width: 100%; box-sizing: border-box; padding: 14px;
+      margin-bottom: 15px; border: 1px solid var(--separator-color);
+      border-radius: 12px; font-size: 1.1em; background-color: var(--background-color);
+    }
+    #summary-timestamp { color: var(--text-secondary-color); font-size: 1em; text-align: center; margin-bottom: 25px; }
+
+    /* --- Edit Page --- */
+    .edit-section { margin-bottom: 30px; }
+    .edit-section h2 { text-align: center; font-size: 1.2em; color: var(--text-secondary-color); margin-bottom: 20px; }
+    .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+    .input-group input {
+        flex-grow: 1; padding: 12px 16px; border: 1px solid var(--separator-color);
+        border-radius: 12px; font-size: 1em; background-color: var(--background-color);
+    }
+    .item-list { list-style: none; padding: 0; }
+    .item-list li {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px; background-color: var(--background-color);
+      border-radius: 12px; margin-bottom: 8px; font-size: 1.1em;
+    }
+
+    /* ############# START: RESPONSIVE DESIGN FOR MOBILE ############# */
+    @media (max-width: 600px) {
+        .machine-grid {
+            grid-template-columns: repeat(3, 1fr); /* 3 columns on mobile */
+            gap: 15px;
+            max-width: 100%;
+            padding: 10px 0;
+        }
+        .machine-icon span { font-size: 1.0em; }
+        .machine-icon svg { width: 30%; height: 30%; }
+        .machine-icon { border-width: 4px; }
+        #home-page h1 { font-size: 1.6em; }
+        .container { padding: 20px; }
+        button, .button-link { padding: 12px 20px; font-size: 0.95em; }
+        .home-actions { flex-direction: column; gap: 10px; align-items: center; }
+        .home-actions button, .home-actions a { width: 80%; box-sizing: border-box; }
+    }
+    /* ############# END: RESPONSIVE DESIGN FOR MOBILE ############# */
+  </style>
+</head>
+<body>
+
+  <!-- HTML Structure -->
+  <div id="home-page" class="page active">
+    <h1>สถานะเครื่อง EFM</h1><div class="machine-grid" id="machine-grid-container"></div>
+    <div class="home-actions">
+        <button id="go-to-summary-btn">สรุปผลประจำวัน</button>
+        <button id="reset-data-btn" class="btn-danger">รีเซ็ตสำหรับวันใหม่</button>
+        <!-- ############# START: NEW BUTTON ############# -->
+        <a href="https://docs.google.com/spreadsheets/d/1o7-Y5CBE4A6ESc2S2QRTIssIB22DMOJte8uaXrQJSN8/edit?usp=sharing" target="_blank" class="button-link btn-secondary">ดูข้อมูลย้อนหลัง</a>
+        <!-- ############# END: NEW BUTTON ############# -->
+    </div>
+  </div>
+  <div id="checklist-page" class="page">
+    <div class="container">
+      <div class="header-controls"><button id="back-to-home-btn" class="btn-secondary">◄ กลับ</button><h1 id="checklist-title">เช็คลิสต์</h1><button id="edit-machine-btn">แก้ไข</button></div>
+      <div id="checklist-items-container"></div>
+      <div id="completion-message" style="display: none;">✅ ตรวจเช็คครบแล้ว!</div>
+      <div class="caretaker-list" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--separator-color);"><strong>👤 ผู้ดูแล:</strong> <span id="caretaker-display"></span></div>
+      <div class="status-selector">
+        <h3>ตั้งสถานะเครื่อง:</h3>
+        <div class="status-buttons">
+            <button class="status-btn ready" data-status="ready">พร้อมใช้งาน</button>
+            <button class="status-btn cleaning" data-status="cleaning">ทำความสะอาด</button>
+            <button class="status-btn not_ready" data-status="not_ready">ไม่พร้อมใช้</button>
+        </div>
+        <div class="save-action"><button id="save-status-btn">บันทึกการเปลี่ยนแปลง</button></div>
+      </div>
+    </div>
+  </div>
+  <div id="summary-page" class="page">
+    <div class="container">
+        <div class="header-controls">
+            <button id="back-to-home-from-summary-btn" class="btn-secondary">◄ กลับ</button>
+            <h1 style="flex-grow: 1;">สรุปผล</h1>
+        </div>
+        <p id="summary-timestamp">ยังไม่มีการบันทึกสรุปสำหรับรอบนี้</p>
+        <div class="summary-section">
+            <div class="summary-item"><span>เครื่องพร้อมใช้งาน</span><span id="summary-ready-count" class="count ready">0</span></div>
+            <div class="summary-item"><span>เครื่องที่ต้องทำความสะอาด</span><span id="summary-cleaning-count" class="count cleaning">0</span></div>
+            <div class="summary-item"><span>เครื่องที่ไม่พร้อมใช้</span><span id="summary-not-ready-count" class="count not_ready">0</span></div>
+        </div>
+        <div class="signature-section" style="margin-top: 20px;">
+            <h2>ลงชื่อผู้บันทึกสรุป</h2>
+            <label for="summarizer-name">ผู้สรุป</label><input type="text" id="summarizer-name" placeholder="กรอกชื่อ...">
+            <!-- ############# START: TEXT CHANGE ############# -->
+            <label for="witness-name">Leader</label><input type="text" id="witness-name" placeholder="กรอกชื่อ...">
+            <!-- ############# END: TEXT CHANGE ############# -->
+            <div class="save-action"><button id="save-summary-btn">บันทึกสรุปผลและส่งข้อมูล</button></div>
+        </div>
+    </div>
+  </div>
+  <div id="edit-page" class="page">
+    <div class="container">
+        <h1 id="edit-title">แก้ไขข้อมูล</h1>
+        <div class="edit-section">
+            <h2>รายการเช็ค</h2>
+            <div class="input-group"><input type="text" id="new-checklist-item-input" placeholder="เพิ่มรายการใหม่..."><button id="add-checklist-item-btn">เพิ่ม</button></div>
+            <ul class="item-list" id="editable-checklist-items"></ul>
+        </div>
+        <div class="edit-section">
+            <h2>ผู้ดูแล</h2>
+            <div class="input-group"><input type="text" id="new-caretaker-input" placeholder="เพิ่มชื่อผู้ดูแล..."><button id="add-caretaker-btn">เพิ่ม</button></div>
+            <ul class="item-list" id="editable-caretakers-list"></ul>
+        </div>
+        <div class="save-action">
+            <button id="save-and-back-btn" class="btn-secondary" style="width: 100%;">บันทึกและกลับ</button>
+        </div>
+    </div>
+  </div>
+
+<script>
+// JavaScript Logic is Confirmed Correct and Remains Unchanged
+document.addEventListener('DOMContentLoaded', () => {
+    const pages = { home: document.getElementById('home-page'), checklist: document.getElementById('checklist-page'), edit: document.getElementById('edit-page'), summary: document.getElementById('summary-page') };
+    const machineGridContainer = document.getElementById('machine-grid-container');
+    const goToSummaryBtn = document.getElementById('go-to-summary-btn');
+    const resetDataBtn = document.getElementById('reset-data-btn');
+    const backToHomeBtn = document.getElementById('back-to-home-btn');
+    const backToHomeFromSummaryBtn = document.getElementById('back-to-home-from-summary-btn');
+    const saveStatusBtn = document.getElementById('save-status-btn');
+    const saveSummaryBtn = document.getElementById('save-summary-btn');
+    const statusButtonsContainer = document.querySelector('.status-buttons');
+    let appData = {};
+    let currentMachineId = null;
+    const EFM_DATA_KEY = 'efmData_v5';
+    const SUMMARY_DATA_KEY = 'efmSummaryData_v5'; 
+    const saveData = () => localStorage.setItem(EFM_DATA_KEY, JSON.stringify(appData));
+    const loadData = () => {
+        const savedData = localStorage.getItem(EFM_DATA_KEY);
+        if (savedData) {
+            appData = JSON.parse(savedData);
+            const firstMachineId = Object.keys(appData)[0];
+            if (firstMachineId && appData[firstMachineId].checklist && appData[firstMachineId].checklist.length > 0 && typeof appData[firstMachineId].checklist[0] === 'string') {
+                Object.values(appData).forEach(machine => {
+                    machine.checklist = machine.checklist.map(text => ({ text: text, checked: false }));
+                });
+                saveData();
+            }
+        } else {
+            appData = {};
+            const initialChecklist = ["สายรัดหน้าท้อง", "เจล", "สายวัด", "ปรอท", "สะอาดพร้อมใช้", "เครื่องมือพร้อมใช้งาน"];
+            for (let i = 1; i <= 11; i++) {
+                const machineId = `efm-${String(i).padStart(2, '0')}`;
+                appData[machineId] = {
+                    name: `EFM ${String(i).padStart(2, '0')}`,
+                    checklist: initialChecklist.map(text => ({ text, checked: false })),
+                    caretakers: ["พยาบาลกมลวรรณ", "พยาบาลสุรีย์"], status: 'ready'
+                };
+            }
+            saveData();
+        }
+    };
+    const showPage = (pageKey) => {
+        Object.values(pages).forEach(p => p.classList.remove('active'));
+        pages[pageKey].classList.add('active');
+        if (pageKey === 'home') renderHomePage();
+    };
+    const formatDateTime = (ts) => new Date(ts).toLocaleString('th-TH', { dateStyle: 'long', timeStyle: 'short' });
+    const renderHomePage = () => {
+        machineGridContainer.innerHTML = '';
+        const efmIconSvg = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.75 12.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" /><path fill-rule="evenodd" d="M11.25 3.75a.75.75 0 0 1 .75.75v1.5h1.5a.75.75 0 0 1 0 1.5h-1.5v1.5a.75.75 0 0 1-1.5 0v-1.5h-1.5a.75.75 0 0 1 0-1.5h1.5v-1.5a.75.75 0 0 1 .75-.75Zm-3.75 3a.75.75 0 0 0-1.5 0v1.5h-1.5a.75.75 0 0 0 0 1.5h1.5v1.5a.75.75 0 0 0 1.5 0v-1.5h1.5a.75.75 0 0 0 0-1.5h-1.5v-1.5Zm8.25-3a.75.75 0 0 1 .75.75v1.5h1.5a.75.75 0 0 1 0 1.5h-1.5v1.5a.75.75 0 0 1-1.5 0v-1.5h-1.5a.75.75 0 0 1 0-1.5h1.5v-1.5a.75.75 0 0 1 .75-.75Z" /><path fill-rule="evenodd" d="M4.5 1.5a.75.75 0 0 0-.75.75v19.5a.75.75 0 0 0 .75.75h15a.75.75 0 0 0 .75-.75V2.25a.75.75 0 0 0-.75-.75h-15Zm14.25 1.5H5.25v18h13.5V3Z" clip-rule="evenodd" /></svg>`;
+        const checkmarkSvg = `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.052-.143Z" clip-rule="evenodd" /></svg>`;
+        Object.keys(appData).sort().forEach(id => {
+            const machine = appData[id];
+            const iconEl = document.createElement('div');
+            iconEl.className = `machine-icon status-${machine.status}`;
+            iconEl.dataset.machineId = id;
+            const allChecked = machine.checklist.length > 0 && machine.checklist.every(item => item.checked);
+            const indicator = allChecked ? `<div class="checked-today-indicator">${checkmarkSvg}</div>` : '';
+            iconEl.innerHTML = `${indicator}${efmIconSvg}<span>${machine.name.split(' ')[1]}</span>`;
+            machineGridContainer.appendChild(iconEl);
+        });
+    };
+    const renderChecklistPage = (id) => {
+        currentMachineId = id;
+        const machine = appData[id];
+        document.getElementById('checklist-title').textContent = `เช็คลิสต์ ${machine.name}`;
+        const container = document.getElementById('checklist-items-container');
+        container.innerHTML = '';
+        machine.checklist.forEach(item => {
+            const label = document.createElement('label'); 
+            label.className = 'checklist-item';
+            label.innerHTML = `<input type="checkbox" class="check-item" ${item.checked ? 'checked' : ''}>${item.text}`;
+            container.appendChild(label);
+        });
+        document.getElementById('caretaker-display').textContent = machine.caretakers.join(', ') || 'ไม่มี';
+        statusButtonsContainer.querySelectorAll('.status-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.status === machine.status));
+        document.getElementById('completion-message').style.display = machine.checklist.every(i => i.checked) ? 'block' : 'none';
+    };
+    const renderSummaryPage = () => {
+        const counts = Object.values(appData).reduce((acc, m) => { acc[m.status] = (acc[m.status] || 0) + 1; return acc; }, {ready:0, cleaning:0, not_ready:0});
+        document.getElementById('summary-ready-count').textContent = counts.ready;
+        document.getElementById('summary-cleaning-count').textContent = counts.cleaning;
+        document.getElementById('summary-not-ready-count').textContent = counts.not_ready;
+        const summaryData = JSON.parse(localStorage.getItem(SUMMARY_DATA_KEY) || '{}');
+        document.getElementById('summarizer-name').value = summaryData.summarizer || '';
+        document.getElementById('witness-name').value = summaryData.witness || '';
+        document.getElementById('summary-timestamp').textContent = summaryData.timestamp ? `บันทึกสรุปผลล่าสุดเมื่อ: ${formatDateTime(summaryData.timestamp)}` : 'ยังไม่มีการบันทึกสรุปสำหรับรอบนี้';
+    };
+    machineGridContainer.addEventListener('click', (e) => {
+        const icon = e.target.closest('.machine-icon');
+        if (icon) { renderChecklistPage(icon.dataset.machineId); showPage('checklist'); }
+    });
+    document.getElementById('checklist-items-container').addEventListener('change', () => {
+         const allChecked = Array.from(document.querySelectorAll('#checklist-items-container .check-item')).every(cb => cb.checked);
+         document.getElementById('completion-message').style.display = allChecked ? 'block' : 'none';
+    });
+    statusButtonsContainer.addEventListener('click', (e) => {
+        const button = e.target.closest('.status-btn');
+        if (button) {
+            statusButtonsContainer.querySelectorAll('.status-btn').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active', true);
+        }
+    });
+    saveStatusBtn.addEventListener('click', () => {
+        const machine = appData[currentMachineId];
+        document.querySelectorAll('#checklist-items-container .check-item').forEach((cb, index) => {
+            machine.checklist[index].checked = cb.checked;
+        });
+        const activeButton = statusButtonsContainer.querySelector('.status-btn.active');
+        if (activeButton) { machine.status = activeButton.dataset.status; }
+        saveData();
+        alert('บันทึกการเปลี่ยนแปลงเรียบร้อยแล้ว');
+        showPage('home');
+    });
+    resetDataBtn.addEventListener('click', () => {
+        if (confirm('คุณแน่ใจหรือไม่ว่าต้องการรีเซ็ตข้อมูลทั้งหมดสำหรับวันใหม่?\n\nการกระทำนี้จะล้างสถานะการตรวจเช็คและข้อมูลสรุปของรอบที่แล้วทั้งหมด')) {
+            Object.values(appData).forEach(machine => {
+                machine.checklist.forEach(item => item.checked = false);
+                machine.status = 'ready';
+            });
+            saveData();
+            localStorage.removeItem(SUMMARY_DATA_KEY);
+            alert('รีเซ็ตข้อมูลสำหรับวันใหม่เรียบร้อยแล้ว');
+            renderHomePage();
+        }
+    });
+    saveSummaryBtn.addEventListener('click', () => {
+        const summarizer = document.getElementById('summarizer-name').value.trim();
+        const witness = document.getElementById('witness-name').value.trim();
+        if (!summarizer || !witness) {
+            alert('กรุณากรอกชื่อผู้สรุปและ Leader ให้ครบถ้วน');
+            return;
+        }
+        saveSummaryBtn.disabled = true;
+        saveSummaryBtn.textContent = 'กำลังบันทึก...';
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxwwfZ7UGnSRhe9czPYe3PFgqO5Jj2b6uYzsJG-8wTHcLCvtKOVb5W6vBUzBbMpQCff/exec";
+        const summaryPayload = {
+            summarizer, witness,
+            ready: document.getElementById('summary-ready-count').textContent,
+            cleaning: document.getElementById('summary-cleaning-count').textContent,
+            notReady: document.getElementById('summary-not-ready-count').textContent,
+        };
+        fetch(SCRIPT_URL, {
+            method: 'POST', mode: 'no-cors', cache: 'no-cache',
+            headers: { 'Content-Type': 'application/json' },
+            redirect: 'follow', body: JSON.stringify(summaryPayload)
+        })
+        .then(() => {
+            alert(`บันทึกข้อมูลสรุปเรียบร้อยแล้ว!\nข้อมูลถูกส่งไปที่ Google Sheet`);
+            const summaryData = { summarizer, witness, timestamp: Date.now() };
+            localStorage.setItem(SUMMARY_DATA_KEY, JSON.stringify(summaryData));
+            renderSummaryPage(); 
+        })
+        .catch(error => {
+            console.error('Error sending data to Google Sheets:', error);
+            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต แล้วลองอีกครั้ง');
+        })
+        .finally(() => {
+            saveSummaryBtn.disabled = false;
+            saveSummaryBtn.textContent = 'บันทึกสรุปผลและส่งข้อมูล';
+        });
+    });
+    goToSummaryBtn.addEventListener('click', () => { renderSummaryPage(); showPage('summary'); });
+    backToHomeBtn.addEventListener('click', () => showPage('home'));
+    backToHomeFromSummaryBtn.addEventListener('click', () => showPage('home'));
+    (function attachEditPageLogic() {
+        const renderEditPage = (id) => {
+            currentMachineId = id; const machine = appData[id];
+            document.getElementById('edit-title').textContent = `แก้ไข ${machine.name}`;
+            const itemsList = document.getElementById('editable-checklist-items'); itemsList.innerHTML = '';
+            machine.checklist.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${item.text}</span><button class="btn-danger" data-type="checklist" data-index="${index}">ลบ</button>`;
+                itemsList.appendChild(li);
+            });
+            const caretakersList = document.getElementById('editable-caretakers-list'); caretakersList.innerHTML = '';
+            machine.caretakers.forEach((name, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${name}</span><button class="btn-danger" data-type="caretaker" data-index="${index}">ลบ</button>`;
+                caretakersList.appendChild(li);
+            });
+        };
+        document.getElementById('edit-machine-btn').addEventListener('click', () => { renderEditPage(currentMachineId); showPage('edit'); });
+        document.getElementById('add-checklist-item-btn').addEventListener('click', () => {
+            const input = document.getElementById('new-checklist-item-input');
+            if (input.value.trim()) { appData[currentMachineId].checklist.push({ text: input.value.trim(), checked: false }); saveData(); renderEditPage(currentMachineId); input.value = ''; }
+        });
+        document.getElementById('add-caretaker-btn').addEventListener('click', () => {
+            const input = document.getElementById('new-caretaker-input');
+            if (input.value.trim()) { appData[currentMachineId].caretakers.push(input.value.trim()); saveData(); renderEditPage(currentMachineId); input.value = ''; }
+        });
+        document.getElementById('edit-page').addEventListener('click', (e) => {
+            if (e.target.matches('button.btn-danger')) {
+                const type = e.target.dataset.type; const index = parseInt(e.target.dataset.index, 10);
+                if (type === 'checklist') appData[currentMachineId].checklist.splice(index, 1);
+                else if (type === 'caretaker') appData[currentMachineId].caretakers.splice(index, 1);
+                saveData(); renderEditPage(currentMachineId);
+            }
+        });
+        document.getElementById('save-and-back-btn').addEventListener('click', () => { renderChecklistPage(currentMachineId); showPage('checklist'); });
+    })();
+
+    loadData();
+    renderHomePage();
+    showPage('home');
+});
+</script>
+</body>
+</html>
